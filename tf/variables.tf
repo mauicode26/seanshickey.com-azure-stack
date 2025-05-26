@@ -1,5 +1,4 @@
 // Variables file
-
 variable "location" {
   description = "Azure region"
   default     = "East US"
@@ -66,4 +65,26 @@ variable "tags" {
   description = "A map of tags to assign to the resources"
   type        = map(string)
   default     = {}
+}
+
+variable "acr_registry_name" {
+  description = "Name of the container registry"
+  type        = string
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9]+$", var.acr_registry_name))
+    error_message = "Registry name must contain only alphanumeric characters."
+  }
+}
+variable "acr_sku" {
+  description = "SKU for the container registry"
+  type        = string
+}
+variable "acr_admin_enabled" {
+  description = "Enable admin user for the registry"
+  type        = bool
+  default     = true
+}
+variable "domain_name" {
+  description = "The domain name for the DNS zone (e.g., seanshickey.com)"
+  type        = string
 }

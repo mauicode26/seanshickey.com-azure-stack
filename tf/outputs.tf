@@ -42,3 +42,23 @@ output "resource_group_location" {
   description = "The location of the resource group"
   value       = var.location
 }
+output "k8s_cluster_name" {
+  description = "The name of the Kubernetes cluster"
+  value       = module.k8s.cluster_name
+}
+
+# DNS outputs
+output "dns_zone_id" {
+  description = "The ID of the DNS zone"
+  value       = module.dns.dns_zone_id
+}
+
+output "dns_zone_name" {
+  description = "The name of the DNS zone"
+  value       = module.dns.dns_zone_name
+}
+
+output "dns_name_servers" {
+  description = "The name servers for the DNS zone"
+  value       = module.dns.name_servers
+}

@@ -1,14 +1,7 @@
-// Module for Kubernetes-related resources
-
-resource "azurerm_resource_group" "k8s_rg" {
-  name     = "k8s-resource-group"
-  location = "eastus"
-}
-
 resource "azurerm_kubernetes_cluster" "k8s_cluster" {
   name                = "k8s-cluster"
-  location            = azurerm_resource_group.k8s_rg.location
-  resource_group_name = azurerm_resource_group.k8s_rg.name
+  location            = var.location
+  resource_group_name = var.resource_group_name
   dns_prefix          = "k8s"
   web_app_routing {
     dns_zone_ids = [var.dns_zone_id]
@@ -26,4 +19,11 @@ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
   tags = {
     Environment = "Production"
   }
+}
+
+resource "azurerm_role_assignment" "k8s_acr_assignment" {
+  principal_id                     = azurerm_kubernetes_cluster.k8s_cluster.identity[0].principal_id
+  role_definition_name             = "AcrPull"
+  scope                            = var.acr_id
+  skip_service_principal_aad_check = true
 }
