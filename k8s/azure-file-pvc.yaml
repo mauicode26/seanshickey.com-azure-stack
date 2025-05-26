@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wp-uploads-pvc
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: wp-uploads-sc
+  resources:
+    requests:
+      storage: 10Gi

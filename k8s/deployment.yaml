@@ -1,0 +1,102 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wp-app
+  namespace: default
+  labels:
+    app: wordpress
+    version: production
+spec:
+  replicas: 2  # Reduced for cost optimization
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Zero downtime deployments
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        version: production
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33  # www-data user
+        fsGroup: 33
+      containers:
+      - name: wordpress
+        image: seanshickey/seanshickey.com:latest  # Production image from registry
+        imagePullPolicy: Always  # Always pull latest in production
+        ports:
+        - containerPort: 80
+          name: http
+        envFrom:
+        - configMapRef:
+            name: wordpress-config
+        env:
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-secrets
+              key: db-password
+        # WordPress URLs for production
+        - name: WORDPRESS_CONFIG_EXTRA
+          value: |
+            define('WP_HOME', 'https://seanshickey.com');
+            define('WP_SITEURL', 'https://seanshickey.com');
+            define('FORCE_SSL_ADMIN', true);
+            define('WP_CACHE', true);
+            define('WP_DEBUG', false);
+            define('WP_DEBUG_LOG', false);
+            define('SCRIPT_DEBUG', false);
+        resources:
+          requests:
+            memory: "256Mi"  # Reduced for cost optimization
+            cpu: "250m"
+          limits:
+            memory: "512Mi"  # Reduced for cost optimization
+            cpu: "500m"
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /wp-admin/install.php
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: seanshickey.com
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /wp-admin/install.php
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: seanshickey.com
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: wp-uploads
+          mountPath: /var/www/html/wp-content/uploads
+        - name: wordpress-config
+          mountPath: /usr/local/etc/php/conf.d/custom.ini
+          subPath: php.ini
+        - name: wordpress-logs
+          mountPath: /var/log/apache2
+      volumes:
+      - name: wp-uploads
+        persistentVolumeClaim:
+          claimName: wp-uploads-pvc
+      - name: wordpress-config
+        configMap:
+          name: wordpress-config
+      - name: wordpress-logs
+        emptyDir: {}

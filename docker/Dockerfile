@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /tmp/* /var/tmp/*
 
 # Copy complete WordPress installation
-COPY ../app/* /var/www/html/
+COPY . /var/www/html/
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
