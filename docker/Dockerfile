@@ -55,4 +55,4 @@ RUN mkdir -p /var/www/html/wp-content/uploads \
 EXPOSE 80
 
 # Start Apache
-CMD ["apache2-foreground"]
+CMD ["apachectl", "-D", "FOREGROUND"]
