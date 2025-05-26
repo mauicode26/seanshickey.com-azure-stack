@@ -1,0 +1,47 @@
+# Ignore git files
+.git
+.gitignore
+
+# Ignore Docker files (these will be removed in Dockerfile anyway)
+Dockerfile*
+docker-compose*.yml
+k8s*.yaml
+README-Docker.md
+scripts/
+
+# Ignore development files
+.env
+.env.local
+.env.development
+.env.test
+wp-config-ddev.php
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.log
+
+# Ignore documentation that's not needed in container
+readme.html
+license.txt
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore backup files
+*.bak
+*~
+
+# Ignore cache directories (these should be in volumes)
+wp-content/cache/
+wp-content/backup-*
+
+# Don't ignore uploads - you may want these in the image
+# wp-content/uploads/

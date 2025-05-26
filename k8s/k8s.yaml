@@ -1,0 +1,220 @@
+# Production Kubernetes manifests for AKS
+# Apply secrets first: kubectl apply -f k8s-secrets.yaml
+# Then apply this file: kubectl apply -f k8s.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: seanshickey-wordpress
+  namespace: default
+  labels:
+    app: wordpress
+    version: production
+spec:
+  replicas: 2  # Reduced for cost optimization
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Zero downtime deployments
+  selector:
+    matchLabels:
+      app: wordpress
+  template:
+    metadata:
+      labels:
+        app: wordpress
+        version: production
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 33  # www-data user
+        fsGroup: 33
+      containers:
+      - name: wordpress
+        image: seanshickey/seanshickey.com:latest  # Production image from registry
+        imagePullPolicy: Always  # Always pull latest in production
+        ports:
+        - containerPort: 80
+          name: http
+        env:
+        # Azure Database for MySQL connection
+        - name: WORDPRESS_DB_HOST
+          value: "seanshickey-sql-server.database.windows.net"
+        - name: WORDPRESS_DB_NAME
+          value: "seanshickey"
+        - name: WORDPRESS_DB_USER
+          value: "sqladmin"
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: wordpress-secrets
+              key: db-password
+        # WordPress URLs for production
+        - name: WORDPRESS_CONFIG_EXTRA
+          value: |
+            define('WP_HOME', 'https://seanshickey.com');
+            define('WP_SITEURL', 'https://seanshickey.com');
+            define('FORCE_SSL_ADMIN', true);
+            define('WP_CACHE', true);
+            define('WP_DEBUG', false);
+            define('WP_DEBUG_LOG', false);
+            define('SCRIPT_DEBUG', false);
+        resources:
+          requests:
+            memory: "256Mi"  # Reduced for cost optimization
+            cpu: "250m"
+          limits:
+            memory: "512Mi"  # Reduced for cost optimization
+            cpu: "500m"
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /wp-admin/install.php
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: seanshickey.com
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /wp-admin/install.php
+            port: 80
+            httpHeaders:
+            - name: Host
+              value: seanshickey.com
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        # Volume mounts for persistent storage
+        volumeMounts:
+        - name: wordpress-uploads
+          mountPath: /var/www/html/wp-content/uploads
+        - name: wordpress-config
+          mountPath: /usr/local/etc/php/conf.d/custom.ini
+          subPath: php.ini
+        - name: wordpress-logs
+          mountPath: /var/log/apache2
+      volumes:
+      - name: wordpress-uploads
+        persistentVolumeClaim:
+          claimName: wordpress-uploads-pvc
+      - name: wordpress-config
+        configMap:
+          name: wordpress-config
+      - name: wordpress-logs
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wordpress-service
+  labels:
+    app: wordpress
+spec:
+  selector:
+    app: wordpress
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  type: ClusterIP  # Internal service for production (use with Ingress)
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: wordpress-ingress
+  annotations:
+    # Use nginx ingress controller (cheaper than Application Gateway)
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "64m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"  # Free SSL with Let's Encrypt
+spec:
+  tls:
+  - hosts:
+    - seanshickey.com
+    - www.seanshickey.com
+    secretName: seanshickey-tls
+  rules:
+  - host: seanshickey.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wordpress-service
+            port:
+              number: 80
+  - host: www.seanshickey.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: wordpress-service
+            port:
+              number: 80
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: wordpress-uploads-pvc
+  labels:
+    app: wordpress
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi  # Reduced for cost optimization
+  storageClassName: azurefile  # Standard tier (cheaper than premium)
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: wordpress-hpa
+  labels:
+    app: wordpress
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: seanshickey-wordpress
+  minReplicas: 2  # Reduced for cost optimization
+  maxReplicas: 5  # Reduced for cost optimization
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
