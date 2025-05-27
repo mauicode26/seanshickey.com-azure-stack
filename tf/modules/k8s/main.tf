@@ -15,15 +15,20 @@ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
   identity {
     type = "SystemAssigned"
   }
-
-  tags = {
-    Environment = "Production"
-  }
 }
 
 resource "azurerm_role_assignment" "k8s_acr_assignment" {
-  principal_id                     = azurerm_kubernetes_cluster.k8s_cluster.identity[0].principal_id
+  principal_id                     = azurerm_kubernetes_cluster.k8s_cluster.kubelet_identity[0].object_id
   role_definition_name             = "AcrPull"
   scope                            = var.acr_id
   skip_service_principal_aad_check = true
+  depends_on                       = [azurerm_kubernetes_cluster.k8s_cluster]
+}
+
+output "cluster_identity" {
+  value = azurerm_kubernetes_cluster.k8s_cluster.identity[0].principal_id
+}
+
+output "kubelet_identity" {
+  value = azurerm_kubernetes_cluster.k8s_cluster.kubelet_identity[0].object_id
 }
