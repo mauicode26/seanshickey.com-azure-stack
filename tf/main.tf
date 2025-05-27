@@ -22,6 +22,18 @@ module "dns" {
   tags                = var.tags
 }
 
+data "azurerm_client_config" "current" {}
+
+module "key_vault" {
+  source = "./modules/key-vault"
+  resource_group_name = module.resource_group.resource_group_name
+  location            = var.location
+  key_vault_name      = var.key_vault_name
+  tenant_id           = data.azurerm_client_config.current.tenant_id
+  domain_name         = var.domain_name
+  tags                = var.tags
+}
+
 module "acr" {
   source = "./modules/acr"
   resource_group_name = module.resource_group.resource_group_name
@@ -38,4 +50,5 @@ module "k8s" {
   location            = var.location
   dns_zone_id = module.dns.dns_zone_id
   acr_id      = module.acr.acr_id
+  cluster_name = var.k8s_cluster_name
 }

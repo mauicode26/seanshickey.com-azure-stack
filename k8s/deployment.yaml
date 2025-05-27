@@ -29,7 +29,7 @@ spec:
         fsGroup: 33
       containers:
       - name: wordpress
-        image: seanshickey/seanshickey.com:latest  # Production image from registry
+        image: "{{ACR_LOGIN_SERVER}}/seanshickey.com:latest"  # Will be replaced by deployment script
         imagePullPolicy: Always  # Always pull latest in production
         ports:
         - containerPort: 80

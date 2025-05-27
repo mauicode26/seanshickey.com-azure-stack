@@ -14,3 +14,7 @@ variable "resource_group_name" {
     description = "The name of the resource group where the Kubernetes cluster will be created."
     type        = string
 }
+variable "cluster_name" {
+    description = "The name of the Kubernetes cluster."
+    type        = string 
+}

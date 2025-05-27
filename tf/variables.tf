@@ -88,3 +88,12 @@ variable "domain_name" {
   description = "The domain name for the DNS zone (e.g., seanshickey.com)"
   type        = string
 }
+variable "k8s_cluster_name" {
+  description = "The name of the Kubernetes cluster"
+  type        = string 
+}
+
+variable "key_vault_name" {
+  description = "The name of the Key Vault for certificate management"
+  type        = string
+}

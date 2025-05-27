@@ -1,5 +1,5 @@
 resource "azurerm_kubernetes_cluster" "k8s_cluster" {
-  name                = "k8s-cluster"
+  name                = var.cluster_name
   location            = var.location
   resource_group_name = var.resource_group_name
   dns_prefix          = "k8s"

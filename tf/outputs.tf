@@ -62,3 +62,40 @@ output "dns_name_servers" {
   description = "The name servers for the DNS zone"
   value       = module.dns.name_servers
 }
+
+output "dns_zone_name_servers" {
+  description = "The name servers for the DNS zone (JSON array)"
+  value       = module.dns.name_servers
+}
+
+# Key Vault outputs
+output "key_vault_name" {
+  description = "The name of the Key Vault"
+  value       = module.key_vault.key_vault_name
+}
+
+output "key_vault_uri" {
+  description = "The URI of the Key Vault"
+  value       = module.key_vault.key_vault_uri
+}
+
+output "certificate_secret_id" {
+  description = "The secret ID of the SSL certificate"
+  value       = module.key_vault.certificate_secret_id
+}
+
+output "certificate_thumbprint" {
+  description = "The thumbprint of the SSL certificate"
+  value       = module.key_vault.certificate_thumbprint
+}
+
+# Container Registry outputs
+output "acr_name" {
+  description = "The login server for the Azure Container Registry"
+  value       = module.acr.acr_name
+}
+
+output "acr_login_server" {
+  description = "The login server for the Azure Container Registry"
+  value       = module.acr.acr_login_server
+}
