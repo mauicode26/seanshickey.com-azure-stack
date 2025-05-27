@@ -3,7 +3,7 @@
 cd ../tf
 
 ACR_NAME=$(terraform output -raw acr_name)
-ACR_LOGIN_SERVER=$(terraform output -raw acr_server_name)
+ACR_LOGIN_SERVER=$(terraform output -raw acr_login_server)
 
 # Login to ACR
 az acr login --name $ACR_NAME
