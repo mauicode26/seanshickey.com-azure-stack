@@ -18,11 +18,9 @@ resource "azurerm_kubernetes_cluster" "k8s_cluster" {
 }
 
 resource "azurerm_role_assignment" "k8s_acr_assignment" {
-  principal_id                     = azurerm_kubernetes_cluster.k8s_cluster.kubelet_identity[0].object_id
-  role_definition_name             = "AcrPull"
   scope                            = var.acr_id
-  skip_service_principal_aad_check = true
-  depends_on                       = [azurerm_kubernetes_cluster.k8s_cluster]
+  role_definition_name             = "AcrPull"
+  principal_id                     = azurerm_kubernetes_cluster.k8s_cluster.kubelet_identity[0].object_id
 }
 
 output "cluster_identity" {

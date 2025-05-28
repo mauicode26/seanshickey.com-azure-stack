@@ -89,6 +89,11 @@ output "certificate_thumbprint" {
   value       = module.key_vault.certificate_thumbprint
 }
 
+output "certificate_thumbprint" {
+  description = "The thumbprint of the SSL certificate"
+  value       = module.key_vault.certificate_thumbprint
+}
+
 # Container Registry outputs
 output "acr_name" {
   description = "The login server for the Azure Container Registry"

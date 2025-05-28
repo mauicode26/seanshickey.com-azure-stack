@@ -29,7 +29,7 @@ spec:
         fsGroup: 33
       containers:
       - name: wordpress
-        image: "seanshickeyacr.azurecr.io/seanshickey.com:latest"  # Will be replaced by deployment script
+        image: "seanshickeyacr.azurecr.io/seanshickey.com:latest"
         imagePullPolicy: Always  # Always pull latest in production
         ports:
         - containerPort: 80
